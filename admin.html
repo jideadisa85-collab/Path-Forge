@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>FORGE '26 Admin</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Inter, "Segoe UI", Arial, sans-serif; background: #f5f8ff; color: #071a38; min-height: 100vh; }
+  [hidden] { display: none !important; }
+
+  #loginView { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: #061a3a; }
+  #loginForm { width: min(380px, 100%); background: #fff; padding: 32px; border-radius: 16px; display: grid; gap: 14px; }
+  #loginForm h1 { font-size: 22px; }
+  input, select { height: 44px; padding: 0 14px; border: 1px solid #d5ddec; border-radius: 10px; font: inherit; background: #fff; }
+  button { height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: #ffc928; color: #061a3a; font-weight: 800; cursor: pointer; }
+  button.secondary { background: #e8eefb; }
+  button.danger { height: 32px; padding: 0 12px; background: #ffe3e8; color: #b3223d; font-size: 12px; }
+  #loginError { color: #b3223d; font-size: 13px; min-height: 18px; }
+
+  header { background: #061a3a; color: #fff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 20px; }
+  header span { color: #b8c8e2; font-size: 13px; }
+  main { width: min(1100px, 100% - 32px); margin: 24px auto; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .controls input { flex: 1; min-width: 200px; }
+  .table-wrap { background: #fff; border-radius: 14px; overflow-x: auto; box-shadow: 0 10px 30px rgba(7, 26, 56, .06); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 14px 16px; font-size: 11px; letter-spacing: 1px; color: #71809b; border-bottom: 1px solid #e6ecf7; }
+  td { padding: 14px 16px; border-bottom: 1px solid #eef2fa; }
+  tr:last-child td { border-bottom: 0; }
+  .empty { padding: 30px; text-align: center; color: #71809b; }
+
+  /* PRINT REPORT */
+  #printReport { display: none; }
+
+  @media print {
+    body { background: #fff; }
+    #loginView, #dashboardView { display: none !important; }
+    #printReport { display: block; padding: 24px; color: #000; font-size: 12px; }
+    #printReport h1 { font-size: 22px; }
+    #printReport h2 { font-size: 18px; color: #c47a00; margin-bottom: 4px; }
+    #printReport h3 { margin: 18px 0 6px; font-size: 14px; }
+    #printReport .report-meta { color: #555; margin: 6px 0; }
+    #printReport ul { margin-left: 18px; }
+    #printReport table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    #printReport th, #printReport td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ccc; }
+    #printReport th { background: #e8eefb; }
+    #printReport tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="loginView">
+  <form id="loginForm">
+    <h1>FORGE '26 Admin</h1>
+    <input type="email" id="loginEmail" placeholder="Admin email" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
+    <button type="submit">Log in</button>
+    <p id="loginError"></p>
+  </form>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboardView" hidden>
+  <header>
+    <div>
+      <h1>Registrations</h1>
+      <span id="totalCount">0 total registrations</span>
+    </div>
+    <button type="button" class="secondary" id="logoutButton">Log out</button>
+  </header>
+
+  <main>
+    <div class="controls">
+      <input type="search" id="searchInput" placeholder="Search name or email">
+      <select id="categoryFilter">
+        <option value="">All categories</option>
+        <option>SSS1 - SSS3 Student</option>
+        <option>Secondary School Graduate</option>
+        <option>Awaiting Admission</option>
+        <option>Awaiting Resumption</option>
+      </select>
+      <button type="button" id="exportButton">Download CSV</button>
+      <button type="button" class="secondary" id="reportButton">Print report</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>NAME</th>
+            <th>EMAIL</th>
+            <th>CATEGORY</th>
+            <th>REGISTERED</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <p class="empty" id="emptyMessage" hidden>No registrations found.</p>
+    </div>
+  </main>
+</section>
+
+<!-- PRINTABLE REPORT (only shows when printing) -->
+<section id="printReport">
+  <h1>THE PATHFORGE FOUNDATION</h1>
+  <h2>FORGE '26</h2>
+  <p>Registration Report</p>
+  <p class="report-meta" id="reportMeta"></p>
+
+  <h3>Summary</h3>
+  <ul id="reportSummary"></ul>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Name</th><th>Email</th><th>Category</th><th>Registered</th></tr>
+    </thead>
+    <tbody id="reportBody"></tbody>
+  </table>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db = supabase.createClient(
+  "https://sqetaehdpycxzlxhzjry.supabase.co",
+  "sb_publishable_GjMFoQCrVHUrPw0QHk713w_WuvBqSlW"
+);
+
+const loginView = document.getElementById("loginView");
+const dashboardView = document.getElementById("dashboardView");
+const loginForm = document.getElementById("loginForm");
+const loginError = document.getElementById("loginError");
+const tableBody = document.getElementById("tableBody");
+const emptyMessage = document.getElementById("emptyMessage");
+const totalCount = document.getElementById("totalCount");
+const searchInput = document.getElementById("searchInput");
+const categoryFilter = document.getElementById("categoryFilter");
+
+let allRows = [];
+
+/* ---------- AUTH ---------- */
+
+async function init() {
+  const { data } = await db.auth.getSession();
+  if (data.session) {
+    showDashboard();
+  }
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginError.textContent = "";
+
+  const { error } = await db.auth.signInWithPassword({
+    email: document.getElementById("loginEmail").value.trim(),
+    password: document.getElementById("loginPassword").value
+  });
+
+  if (error) {
+    loginError.textContent = "Wrong email or password.";
+    return;
+  }
+  showDashboard();
+});
+
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  await db.auth.signOut();
+  allRows = [];
+  dashboardView.hidden = true;
+  loginView.hidden = false;
+});
+
+/* ---------- DATA ---------- */
+
+async function showDashboard() {
+  loginView.hidden = true;
+  dashboardView.hidden = false;
+  await loadRegistrations();
+}
+
+async function loadRegistrations() {
+  const { data, error } = await db
+    .from("registrations")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    totalCount.textContent = "Could not load registrations.";
+    return;
+  }
+  allRows = data;
+  render();
+}
+
+function getFilteredRows() {
+  const term = searchInput.value.trim().toLowerCase();
+  const category = categoryFilter.value;
+
+  return allRows.filter((row) => {
+    const matchesSearch =
+      row.full_name.toLowerCase().includes(term) ||
+      row.email.toLowerCase().includes(term);
+    const matchesCategory = !category || row.category === category;
+    return matchesSearch && matchesCategory;
+  });
+}
+
+function render() {
+  const rows = getFilteredRows();
+  totalCount.textContent = allRows.length + " total registrations";
+  tableBody.replaceChildren();
+  emptyMessage.hidden = rows.length > 0;
+
+  rows.forEach((row, index) => {
+    const tr = document.createElement("tr");
+
+    const values = [
+      String(rows.length - index),
+      row.full_name,
+      row.email,
+      row.category,
+      new Date(row.created_at).toLocaleDateString("en-GB")
+    ];
+
+    values.forEach((value) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+
+    const actionCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "danger";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => deleteRow(row));
+    actionCell.appendChild(deleteButton);
+    tr.appendChild(actionCell);
+
+    tableBody.appendChild(tr);
+  });
+}
+
+async function deleteRow(row) {
+  if (!confirm("Delete the registration for " + row.full_name + "?")) return;
+
+  const { data, error } = await db
+    .from("registrations")
+    .delete()
+    .eq("id", row.id)
+    .select();
+
+  if (error || !data || data.length === 0) {
+    alert("Could not delete this registration.");
+    return;
+  }
+  loadRegistrations();
+}
+
+/* ---------- FILTERS ---------- */
+
+searchInput.addEventListener("input", render);
+categoryFilter.addEventListener("change", render);
+
+/* ---------- CSV EXPORT ---------- */
+
+function csvCell(value) {
+  let text = String(value ?? "");
+  if (/^[=+\-@]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+document.getElementById("exportButton").addEventListener("click", () => {
+  const rows = getFilteredRows();
+  const lines = [["Name", "Email", "Category", "Registered"].map(csvCell).join(",")];
+
+  rows.forEach((row) => {
+    lines.push(
+      [row.full_name, row.email, row.category, new Date(row.created_at).toISOString()]
+        .map(csvCell)
+        .join(",")
+    );
+  });
+
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "forge26-registrations.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+
+/* ---------- PRINT REPORT ---------- */
+
+document.getElementById("reportButton").addEventListener("click", () => {
+  const rows = getFilteredRows();
+
+  const filters = [];
+  if (searchInput.value.trim()) filters.push('search "' + searchInput.value.trim() + '"');
+  if (categoryFilter.value) filters.push(categoryFilter.value);
+
+  document.getElementById("reportMeta").textContent =
+    "Generated " + new Date().toLocaleString("en-GB") +
+    " | Filters: " + (filters.length ? filters.join(", ") : "All registrations");
+
+  const summary = document.getElementById("reportSummary");
+  summary.replaceChildren();
+
+  const counts = {};
+  rows.forEach((row) => {
+    counts[row.category] = (counts[row.category] || 0) + 1;
+  });
+
+  const lines = ["Total registrations: " + rows.length];
+  Object.keys(counts).forEach((name) => lines.push(name + ": " + counts[name]));
+
+  lines.forEach((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    summary.appendChild(li);
+  });
+
+  const body = document.getElementById("reportBody");
+  body.replaceChildren();
+
+  rows.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    [
+      String(index + 1),
+      row.full_name,
+      row.email,
+      row.category,
+      new Date(row.created_at).toLocaleDateString("en-GB")
+    ].forEach((value) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+  window.print();
+});
+
+init();
+</script>
+</body>
+</html>
