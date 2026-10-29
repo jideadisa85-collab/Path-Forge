@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+        name="description"
+        content="Register for FORGE '26 by The PathForge Foundation — Equipping young minds for Excellence, Purpose and Impact."
+    >
+    <title>FORGE '26 | The PathForge Foundation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="#home" class="brand">
+        <span   class="brand-mark">F</span>
+        <span class="brand-text">
+        <strong>PATHFORGE</strong>
+              <small>FOUNDATION</small>
+                </span>
+      </a>
+      <button 
+             class="menu-toggle"
+                id="menuToggle"
+                type="button"
+                aria-label="Open navigation menu"
+                aria-expanded="false">
+
+                <span></span>
+                <span></span>
+                <span></span>
+      </button>
+
+      <ul class="nav-links" id="navlinks">
+        <li>
+          <a href="#home">Home</a>
+        </li>
+        <li>
+          <a href="#about">About</a>
+        </li>
+        <li>
+          <a href="#event">Event</a>
+        </li>
+        <li>
+          <a href="#register" class="nav-register">Register
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+  
+    <main>
+      <section class="registration section" id="register">
+      <div class="registration-glow"></div>
+        <div class="section-container">
+
+  <div class="registration-wrapper">
+
+    <div class="registration-intro reveal">
+
+       <span class="section-label">TAKE THE NEXT STEP</span>
+
+      <h2>Register for <span>FORGE '26</span> </h2>
+
+     <p>Fill in your details below to register for the program</p>
+
+    <div class="registration-note">
+     <span>✦</span>
+
+      <p>Your details are only used for registration purposes.</p>
+
+   </div>
+</div>
+
+<!-- FORM -->
+
+<div class="form-card reveal">
+
+  <form id="registrationForm" novalidate>
+
+    <div class="form-group">
+  <label for="email">Please enter your email address</label>
+
+    <input type="email" name="email" id="email" placeholder="Your email address" autocomplete="email" required>
+
+    <small class="field-error" id="emailError"></small>
+
+  </div>
+
+       <!-- FULL NAME -->
+
+  <div class="form-group">
+    <label for="fullName" >What's your name?</label>
+    <input type="text" name="fullName" id="fullName" placeholder="Your full name" autocomplete="name" required>
+    
+    <small class="field-error" id="nameError"></small>
+  </div>
+
+  <!-- CATEGORY -->
+
+  <fieldset class="form-group category-group">
+    <legend>What category do you belong to?</legend>
+    <small class="field-error" id="categoryError"></small>
+    <label for="radio-option">
+      <input type="radio" name="category" value="SSS1 - SSS3 Student">
+      <span class="custom-radio"></span>
+    <span>SSS1 - SSS3 Student</span>
+    </label>
+    <label class="radio-option">
+      <input type="radio" name="category" value="Secondary School Graduate">
+      
+      <span class="custom-radio"></span>
+      <span>Secondary School Graduate</span>
+
+    </label>
+
+    <label class="radio-option">
+      <input type="radio" name="category" value="Awaiting Admission">
+      <span class="custom-radio"></span>
+      <span>Awaiting Admission</span>
+    </label>
+
+    <label class="radio-option">
+      <input type="radio" name="category" value="Awaiting Resumption">
+      <span class="custom-radio"></span>
+      <span>Awaiting Resumption</span>
+    </label>
+  </fieldset>
+
+  <!-- SUBMIT -->
+
+  <button type="submit" class="submit-button" id="submitButton">
+    <span class="button-text">Submit Resgistration</span>
+    <span class="button-loader" aria-hidden="true"></span>
+    <span class="button-arrow">→</span>
+  </button>
+
+  <p class="form-disclaimer">By submitting this form, you confirm that the information provided is correct.</p>
+
+  </form>
+
+  <div class="success-message" id="successMessage" hidden>
+
+  <div class="success-icon">✓</div>
+
+  <h3>Registration Successful! 🎉</h3>
+  <p>Thank you for registering for FORGE '26'</p>
+
+  <P>We look forward to seeing you at <strong>FCR, Alexander Brown Hall, UCH, Ibadan.</strong>
+  </P>
+
+  <button type="button" id="registerAnother" class="another-button">Register Another Person</button>
+
+</div>
+  </div>
+        </div>
+      </div>
+</section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-container">
+
+        <div class="footer-brand">
+
+          <div class="brand"><span class="brand-mark">F</span>
+            <span class="brand-text"><strong>PATHFORGE</strong> <small>FOUNDATION</small>
+            </span>
+          </div>
+
+          <p>
+            Equipping young minds for Excellence, Purpose and Impact.
+          </p>
+
+        </div>
+        <div class="footer-program"><span>PROGRAM</span>
+          <h3>FORGE '26</h3>
+           <p>FCR, Alexander Brown Hall, UCH, Ibadan</p>
+        </div>
+
+        <div class="footer-links"><span>QUICK LINKS</span>
+          <a href="#home">Home</a>
+
+          <a href="#about">About</a>
+
+          <a href="#event">Event</a>
+
+          <a href="#register">Register</a>
+
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 The PathForge Foundation. All rights reserved.</p>
+
+        <p>FORGE '26</p>
+
+      </div>
+      
+    </footer>
+
+  
+  <script src="script.js"></script>
+</body>
+</html>
